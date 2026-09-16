@@ -1,0 +1,58 @@
+{
+  "name": "mision-entera",
+  "version": "1.0.0",
+  "description": "Juego educativo de operaciones con numeros enteros.",
+  "main": "electron/main.js",
+  "author": "Mision Entera",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win nsis",
+    "dist:linux": "electron-builder --linux AppImage deb rpm"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "electron": "^38.1.0",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2"
+  },
+  "build": {
+    "appId": "co.misionentera.app",
+    "productName": "Mision Entera",
+    "asar": true,
+    "files": [
+      "electron/**/*",
+      "html/**/*",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "TU_USUARIO_GITHUB",
+      "repo": "mision-entera"
+    },
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "Mision-Entera-Setup-${version}.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb", "rpm"],
+      "category": "Education",
+      "artifactName": "Mision-Entera-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

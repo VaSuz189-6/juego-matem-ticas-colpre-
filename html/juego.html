@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Misión Entera</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800;900&family=Exo+2:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="../css/mision-entera.css">
+</head>
+<body>
+
+<canvas id="starfield" aria-hidden="true"></canvas>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none"><path d="M12 2C9 5 7.5 9 7.5 13.5c0 1.6.3 3 .8 4.2L12 22l3.7-4.3c.5-1.2.8-2.6.8-4.2C16.5 9 15 5 12 2Z" fill="#49d8ff" opacity="0.9"/><circle cx="12" cy="10.5" r="2.1" fill="#060a1f"/><path d="M8.3 15.5 5 17.8l1.4-4.2M15.7 15.5 19 17.8l-1.4-4.2" stroke="#ffb84d" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
+      <span class="brand-name">Desafío Matemático</span>
+    </div>
+    <button id="soundToggle" class="icon-btn" aria-label="Activar o silenciar sonido">🔊</button>
+  </header>
+
+  <!-- CONFIGURACION DE LA MISION -->
+  <main id="screen-setup" class="screen page-shell">
+    <section class="hero page-panel">
+      <h1>Misión Entera</h1>
+      <p class="tagline">Prepara tu misión, elige un reto y demuestra cuánto dominas los números enteros.</p>
+      <p class="device-note"><a class="text-link" href="grados.html">🏫 Cambiar de grado</a> · Cada dispositivo guarda su propio listado de resultados.</p>
+      <a class="ghost-btn setup-back-link" href="grados.html">← Volver a grados</a>
+    </section>
+
+    <div class="pilot-form">
+      <div class="field">
+        <label for="playerName">Nombre completo</label>
+        <input id="playerName" type="text" maxlength="60" placeholder="*Nombre*" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="playerGrade">Grado</label>
+        <input id="playerGrade" type="text" maxlength="20" placeholder="*Grado*" autocomplete="off">
+        <span class="field-help">Escribe tu grado y curso tal como lo indique tu docente.</span>
+      </div>
+      <p class="form-hint" id="formHint" hidden>Escribe tu nombre y tu grado antes de despegar.</p>
+    </div>
+
+    <section class="mode-grid">
+      <button class="mode-card" data-mode="suma_resta">
+        <span class="mode-icon c1">➕</span>
+        <span class="mode-body">
+          <span class="mode-name">SUMA Y RESTA</span>
+          <span class="mode-desc">16 preguntas de suma y resta de enteros, con dificultad creciente.</span>
+          <span class="mode-best" data-best="suma_resta">Mejor puntaje aquí: —</span>
+        </span>
+        <span class="mode-go">DESPEGAR →</span>
+      </button>
+
+      <button class="mode-card" data-mode="mult_div">
+        <span class="mode-icon c2">✖️</span>
+        <span class="mode-body">
+          <span class="mode-name">MULTIPLICACIÓN Y DIVISIÓN</span>
+          <span class="mode-desc">16 preguntas aplicando la regla de los signos, con dificultad creciente.</span>
+          <span class="mode-best" data-best="mult_div">Mejor puntaje aquí: —</span>
+        </span>
+        <span class="mode-go">DESPEGAR →</span>
+      </button>
+
+      <button class="mode-card" data-mode="mixta">
+        <span class="mode-icon c3">🌌</span>
+        <span class="mode-body">
+          <span class="mode-name">MISIÓN MIXTA</span>
+          <span class="mode-desc">16 preguntas con las cuatro operaciones combinadas. El reto completo.</span>
+          <span class="mode-best" data-best="mixta">Mejor puntaje aquí: —</span>
+        </span>
+        <span class="mode-go">DESPEGAR →</span>
+      </button>
+    </section>
+
+    <details class="rules-card">
+      <summary>Repasa las reglas de los signos</summary>
+      <div class="rules-content">
+        <div class="rule-row"><b>Suma:</b> si los signos son iguales, suma los valores y conserva el signo. Si son distintos, resta el menor del mayor (en valor absoluto) y usa el signo del número más grande.</div>
+        <div class="rule-row"><b>Resta:</b> restar es sumar el opuesto → a − b = a + (−b).</div>
+        <div class="rule-row"><b>Multiplicación y división:</b> signos iguales (+·+ o −·−) dan resultado positivo. Signos distintos (+·− o −·+) dan resultado negativo.</div>
+        <div class="rule-row"><b>Calificación:</b> hay 16 preguntas por misión, repartidas en 4 niveles. Cada acierto vale más puntos según el nivel de dificultad, y la nota final (0.1 a 5.0) se calcula según el total de puntos de dificultad acumulados. Nota mínima aprobatoria: 3.0.</div>
+      </div>
+    </details>
+
+    <button id="viewHistBtn" class="ghost-btn hist-link-btn">📋 Ver historial de este dispositivo (<span id="histCount">0</span>)</button>
+  </main>
+
+  <!-- GAME -->
+  <main id="screen-game" class="screen" hidden>
+    <div class="hud">
+      <div class="hud-row">
+        <button id="quitBtn" class="ghost-btn" hidden>← Salir</button>
+        <span class="rank-badge" id="rankLabel">Cadete</span>
+        <span class="score" id="scoreDisplay">0 pts</span>
+      </div>
+      <div class="hud-row">
+        <span class="player-chip" id="playerChip">Piloto — Grado</span>
+        <span class="qcounter" id="qCounter">Pregunta 1 / 16</span>
+        <span class="streak" id="streakDisplay">🔥 racha 0</span>
+      </div>
+    </div>
+
+    <div class="progress-rail" id="progressRail"></div>
+    <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+
+    <div class="stage">
+      <div class="ship-wrap">
+        <svg class="ship" id="ship" viewBox="0 0 24 24" fill="none"><path d="M12 2C9 5 7.5 9 7.5 13.5c0 1.6.3 3 .8 4.2L12 22l3.7-4.3c.5-1.2.8-2.6.8-4.2C16.5 9 15 5 12 2Z" fill="#49d8ff"/><circle cx="12" cy="10.5" r="2.1" fill="#060a1f"/><path d="M8.3 15.5 5 17.8l1.4-4.2M15.7 15.5 19 17.8l-1.4-4.2" stroke="#ffb84d" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
+        <div class="float-text-layer" id="floatText"></div>
+      </div>
+      <div class="console">
+        <div class="equation" id="equationDisplay">(−4) + 7 = ?</div>
+        <div class="options" id="optionsGrid"></div>
+        <div class="feedback" id="feedbackBox" hidden></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- GAME OVER / RESULTADO -->
+  <main id="screen-over" class="screen" hidden>
+    <div class="over-wrap">
+      <span class="over-kicker" id="overKicker">Nombre — Grado — Misión</span>
+      <div class="nota-ring">
+        <span class="nota-value" id="overNota">0.1</span>
+        <span class="nota-label" id="overNotaLabel">No aprobado</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="stat-value" id="overCorrect">0/16</div><div class="stat-label">Respuestas correctas</div></div>
+        <div class="stat-tile"><div class="stat-value" id="overScore">0</div><div class="stat-label">Puntaje de juego</div></div>
+        <div class="stat-tile"><div class="stat-value" id="overStreak">0</div><div class="stat-label">Mejor racha</div></div>
+        <div class="stat-tile"><div class="stat-value" id="overBest">0</div><div class="stat-label">Mejor puntaje aquí</div></div>
+      </div>
+      <div class="over-actions">
+        <button class="primary-btn" id="downloadResultBtn">Descargar mi resultado (CSV)</button>
+      </div>
+      <div class="over-actions">
+        <button class="secondary-btn" id="changeMissionBtn">Cambiar misión</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- HISTORIAL -->
+  <main id="screen-hist" class="screen" hidden>
+    <div class="hud-row history-header">
+      <button id="histBackBtn" class="ghost-btn">← Volver</button>
+      <h2 class="history-title">Historial de este dispositivo</h2>
+      <span></span>
+    </div>
+    <div class="table-wrap">
+      <table class="hist-table" id="histTable">
+        <thead>
+          <tr><th>Grado</th><th>Nombre</th><th>Misión</th><th>Nota</th><th>Aciertos</th><th>Puntaje</th><th>Fecha</th></tr>
+        </thead>
+        <tbody id="histTbody"></tbody>
+      </table>
+    </div>
+    <p class="hist-empty" id="histEmpty" hidden>Todavía no hay resultados guardados en este dispositivo.</p>
+    <div class="over-actions history-actions">
+      <button class="primary-btn" id="downloadHistBtn">Descargar listado completo (CSV)</button>
+      <button class="secondary-btn" id="clearHistBtn">Borrar historial</button>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  try{
+    var player = JSON.parse(localStorage.getItem('misionEntera.player') || 'null');
+    if(player){
+      document.getElementById('playerName').value = player.name || '';
+      document.getElementById('playerGrade').value = player.grade || '';
+    }
+    var grade = new URLSearchParams(window.location.search).get('grado');
+    if(grade){ document.getElementById('playerGrade').value = grade; }
+  }catch(error){}
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+
+  var reducedMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var QUESTIONS_PER_TIER = 4;
+  var MAX_WEIGHT = QUESTIONS_PER_TIER * (1+2+3+4);
+
+  /* ---------------- storage helpers ---------------- */
+  function lsGet(key){ try{ return localStorage.getItem(key); }catch(e){ return null; } }
+  function lsSet(key,val){ try{ localStorage.setItem(key,val); }catch(e){} }
+  function lsRemove(key){ try{ localStorage.removeItem(key); }catch(e){} }
+
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  /* ---------------- starfield ---------------- */
+  (function starfield(){
+    var canvas = document.getElementById('starfield');
+    var ctx = canvas.getContext('2d');
+    var stars = [];
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize(){
+      canvas.width = innerWidth * dpr;
+      canvas.height = innerHeight * dpr;
+      canvas.style.width = innerWidth + 'px';
+      canvas.style.height = innerHeight + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      var count = Math.floor((innerWidth*innerHeight)/8000);
+      stars = [];
+      for(var i=0;i<count;i++){
+        stars.push({
+          x: Math.random()*innerWidth,
+          y: Math.random()*innerHeight,
+          r: Math.random()*1.4+0.3,
+          a: Math.random()*0.6+0.3,
+          speed: Math.random()*0.6+0.2,
+          phase: Math.random()*Math.PI*2,
+          warm: Math.random()<0.15
+        });
+      }
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    var t = 0;
+    function draw(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      for(var i=0;i<stars.length;i++){
+        var s = stars[i];
+        var alpha = reducedMotion ? s.a : s.a * (0.6 + 0.4*Math.sin(t*s.speed + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+        ctx.fillStyle = s.warm ? 'rgba(255,184,77,'+alpha+')' : 'rgba(200,225,255,'+alpha+')';
+        ctx.fill();
+      }
+      t += 0.02;
+      if(!reducedMotion) requestAnimationFrame(draw);
+    }
+    draw();
+  })();
+
+  /* ---------------- audio ---------------- */
+  var audioCtx = null;
+  var muted = lsGet('misionEntera.muted') === '1';
+  var soundBtn = document.getElementById('soundToggle');
+  function refreshSoundIcon(){ soundBtn.textContent = muted ? '🔇' : '🔊'; soundBtn.setAttribute('aria-label', muted ? 'Activar sonido' : 'Silenciar sonido'); }
+  refreshSoundIcon();
+  soundBtn.addEventListener('click', function(){
+    muted = !muted;
+    lsSet('misionEntera.muted', muted ? '1' : '0');
+    refreshSoundIcon();
+    ensureAudio();
+  });
+
+  function ensureAudio(){
+    if(!audioCtx){
+      try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    }
+    if(audioCtx && audioCtx.state === 'suspended'){ audioCtx.resume(); }
+  }
+
+  function beep(freq, dur, type, vol, delay){
+    if(!audioCtx || muted) return;
+    type = type || 'sine'; vol = vol==null ? 0.12 : vol; delay = delay || 0;
+    var t0 = audioCtx.currentTime + delay;
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0+dur+0.03);
+  }
+  function sndCorrect(){ beep(660,0.12,'sine',0.12); beep(880,0.16,'sine',0.12,0.08); }
+  function sndWrong(){ beep(150,0.28,'sawtooth',0.09); }
+  function sndTierUp(){ beep(523,0.1,'triangle',0.12); beep(659,0.1,'triangle',0.12,0.1); beep(784,0.18,'triangle',0.12,0.2); }
+  function sndOver(){ beep(392,0.18,'sine',0.1); beep(311,0.18,'sine',0.1,0.15); beep(233,0.32,'sine',0.1,0.3); }
+
+  /* ---------------- math generators ---------------- */
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function randNonZero(min,max){ var n=0; var guard=0; while(n===0 && guard<50){ n=randInt(min,max); guard++; } return n||1; }
+  function choice(arr){ return arr[randInt(0,arr.length-1)]; }
+  function shuffle(arr){ for(var i=arr.length-1;i>0;i--){ var j=randInt(0,i); var tmp=arr[i]; arr[i]=arr[j]; arr[j]=tmp; } return arr; }
+  function fmt(n){ return n<0 ? '(−'+Math.abs(n)+')' : String(n); }
+  function fmtVal(n){ return n<0 ? '−'+Math.abs(n) : String(n); }
+
+  var HINT_ADD = "Signos iguales: suma y conserva el signo. Signos distintos: resta y usa el signo del mayor.";
+  var HINT_SUB = "Restar es sumar el opuesto: a − b = a + (−b).";
+  var HINT_MULDIV = "Signos iguales → resultado positivo. Signos distintos → resultado negativo.";
+  var HINT_MULTI = "Resuelve de izquierda a derecha, un paso a la vez.";
+
+  function genSumaResta(cfg){
+    var r = cfg.range;
+    if(cfg.threeTerm && Math.random() < 0.55){
+      var a=randInt(-r,r), b=randInt(-r,r), c=randInt(-r,r);
+      var op1 = choice(['+','-']), op2 = choice(['+','-']);
+      var res = op1==='+' ? a+b : a-b;
+      res = op2==='+' ? res+c : res-c;
+      var expr = fmt(a)+' '+(op1==='+'?'+':'−')+' '+fmt(b)+' '+(op2==='+'?'+':'−')+' '+fmt(c);
+      return { expr:expr, answer:res, hint:HINT_MULTI };
+    }
+    var a2=randInt(-r,r), b2=randInt(-r,r);
+    var op = choice(['+','-']);
+    var res2 = op==='+' ? a2+b2 : a2-b2;
+    var expr2 = fmt(a2)+' '+(op==='+'?'+':'−')+' '+fmt(b2);
+    return { expr:expr2, answer:res2, hint: op==='+' ? HINT_ADD : HINT_SUB };
+  }
+
+  function genMultDiv(cfg){
+    var fm = cfg.factorMax;
+    if(Math.random() < 0.5){
+      var b = randNonZero(-fm,fm);
+      var q = randNonZero(-fm,fm);
+      var a = b*q;
+      return { expr: fmt(a)+' ÷ '+fmt(b), answer:q, hint:HINT_MULDIV };
+    }
+    var a2 = randNonZero(-fm,fm), b2 = randNonZero(-fm,fm);
+    return { expr: fmt(a2)+' × '+fmt(b2), answer:a2*b2, hint:HINT_MULDIV };
+  }
+
+  function genMixta(cfg){
+    var opType = choice(['add','sub','mul','div']);
+    if(opType==='add' || opType==='sub'){
+      var r = cfg.addRange;
+      var a=randInt(-r,r), b=randInt(-r,r);
+      var res = opType==='add' ? a+b : a-b;
+      return { expr: fmt(a)+' '+(opType==='add'?'+':'−')+' '+fmt(b), answer:res, hint: opType==='add' ? HINT_ADD : HINT_SUB };
+    }
+    var fm = cfg.factorMax;
+    if(opType==='div'){
+      var d = randNonZero(-fm,fm), q = randNonZero(-fm,fm), num = d*q;
+      return { expr: fmt(num)+' ÷ '+fmt(d), answer:q, hint:HINT_MULDIV };
+    }
+    var a2=randNonZero(-fm,fm), b2=randNonZero(-fm,fm);
+    return { expr: fmt(a2)+' × '+fmt(b2), answer:a2*b2, hint:HINT_MULDIV };
+  }
+
+  function makeOptions(answer){
+    var set = [answer];
+    function add(v){ if(v!==answer && set.indexOf(v)===-1) set.push(v); }
+    add(-answer);
+    var deltas = shuffle([1,-1,2,-2,3,-3,4,-4,5,-5,7,-7,10,-10]);
+    for(var i=0;i<deltas.length && set.length<6;i++){ add(answer+deltas[i]); }
+    var guard=0;
+    while(set.length<4 && guard<60){ add(answer+randInt(-14,14)); guard++; }
+    var opts = shuffle(set).slice(0,4);
+    if(opts.indexOf(answer)===-1){ opts[randInt(0,3)] = answer; }
+    return shuffle(opts);
+  }
+
+  /* ---------------- mode / tier config ---------------- */
+  var RANK_NAMES = ['Cadete','Piloto','Comandante','Almirante'];
+  var PLANET_NAMES = ['Base Terra','Estación Lunar','Cinturón Kepler','Portal de Andrómeda'];
+
+  var MODES = {
+    suma_resta: {
+      name:'Suma y Resta', short:'Suma y Resta',
+      gen: genSumaResta,
+      tiers:[
+        {range:10, threeTerm:false, time:20},
+        {range:20, threeTerm:false, time:35},
+        {range:35, threeTerm:true,  time:60},
+        {range:50, threeTerm:true,  time:90}
+      ]
+    },
+    mult_div: {
+      name:'Multiplicación y División', short:'Multiplicación y División',
+      gen: genMultDiv,
+      tiers:[
+        {factorMax:10, time:20},
+        {factorMax:12, time:35},
+        {factorMax:15, time:60},
+        {factorMax:15, time:90}
+      ]
+    },
+    mixta: {
+      name:'Misión Mixta', short:'Misión Mixta',
+      gen: genMixta,
+      tiers:[
+        {addRange:8,  factorMax:6,  time:20},
+        {addRange:15, factorMax:9,  time:35},
+        {addRange:25, factorMax:12, time:60},
+        {addRange:35, factorMax:15, time:90}
+      ]
+    }
+  };
+
+  function buildQuestions(modeId){
+    var modeCfg = MODES[modeId];
+    var qs = [];
+    for(var tier=1; tier<=4; tier++){
+      var cfg = modeCfg.tiers[tier-1];
+      for(var i=0;i<QUESTIONS_PER_TIER;i++){
+        var q = modeCfg.gen(cfg);
+        q.tier = tier;
+        q.time = cfg.time;
+        qs.push(q);
+      }
+    }
+    return qs;
+  }
+
+  /* ---------------- DOM refs ---------------- */
+  var screens = {
+    setup: document.getElementById('screen-setup'),
+    game: document.getElementById('screen-game'),
+    over: document.getElementById('screen-over'),
+    hist: document.getElementById('screen-hist')
+  };
+  function showScreen(name){
+    Object.keys(screens).forEach(function(k){ screens[k].hidden = (k!==name); });
+  }
+
+  var playerNameEl = document.getElementById('playerName');
+  var playerGradeEl = document.getElementById('playerGrade');
+  var formHintEl = document.getElementById('formHint');
+  [playerNameEl, playerGradeEl].forEach(function(el){
+    el.addEventListener('input', function(){ el.classList.remove('field-error'); formHintEl.hidden = true; });
+  });
+
+  function validatePilotForm(){
+    var nameOk = playerNameEl.value.trim().length>0;
+    var gradeOk = playerGradeEl.value.trim().length>0;
+    playerNameEl.classList.toggle('field-error', !nameOk);
+    playerGradeEl.classList.toggle('field-error', !gradeOk);
+    if(!nameOk || !gradeOk){
+      formHintEl.hidden = false;
+      (nameOk ? playerGradeEl : playerNameEl).focus();
+      return false;
+    }
+    formHintEl.hidden = true;
+    return true;
+  }
+
+  var rankLabelEl = document.getElementById('rankLabel');
+  var scoreDisplayEl = document.getElementById('scoreDisplay');
+  var qCounterEl = document.getElementById('qCounter');
+  var streakDisplayEl = document.getElementById('streakDisplay');
+  var playerChipEl = document.getElementById('playerChip');
+  var progressRailEl = document.getElementById('progressRail');
+  var timerFillEl = document.getElementById('timerFill');
+  var equationDisplayEl = document.getElementById('equationDisplay');
+  var optionsGridEl = document.getElementById('optionsGrid');
+  var feedbackBoxEl = document.getElementById('feedbackBox');
+  var floatTextEl = document.getElementById('floatText');
+  var histTbodyEl = document.getElementById('histTbody');
+  var histTableEl = document.getElementById('histTable');
+  var histEmptyEl = document.getElementById('histEmpty');
+  var histCountEl = document.getElementById('histCount');
+
+  function renderProgressRail(currentTier){
+    var html='';
+    for(var i=0;i<4;i++){
+      var cls = 'rail-node';
+      if(i < currentTier-1) cls += ' done';
+      else if(i === currentTier-1) cls += ' active';
+      html += '<div class="'+cls+'"><div class="rail-line"></div><div class="rail-dot"></div><div class="rail-label">'+PLANET_NAMES[i]+'</div></div>';
+    }
+    progressRailEl.innerHTML = html;
+  }
+
+  function showToast(msg){
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('show'); });
+    setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ el.remove(); }, 400); }, 1900);
+  }
+
+  function spawnFloatText(text, good){
+    var el = document.createElement('div');
+    el.className = 'float-pop';
+    el.textContent = text;
+    el.style.color = good ? 'var(--good)' : 'var(--bad)';
+    floatTextEl.appendChild(el);
+    setTimeout(function(){ el.remove(); }, 1150);
+  }
+
+  /* ---------------- historial (por dispositivo) ---------------- */
+  var HIST_KEY = 'misionEntera.historial';
+  function loadHistorial(){ try{ return JSON.parse(lsGet(HIST_KEY) || '[]'); }catch(e){ return []; } }
+  function saveHistorialRecord(record){
+    var list = loadHistorial();
+    list.push(record);
+    lsSet(HIST_KEY, JSON.stringify(list));
+    refreshHistCount();
+  }
+  function refreshHistCount(){ histCountEl.textContent = String(loadHistorial().length); }
+
+  function sortedHistorial(){
+    return loadHistorial().slice().sort(function(a,b){
+      if(a.grado !== b.grado) return a.grado < b.grado ? -1 : 1;
+      if(a.nombre !== b.nombre) return a.nombre < b.nombre ? -1 : 1;
+      return (a.fecha < b.fecha) ? -1 : 1;
+    });
+  }
+
+  function renderHistTable(){
+    var list = sortedHistorial();
+    histEmptyEl.hidden = list.length > 0;
+    histTableEl.hidden = list.length === 0;
+    histTbodyEl.innerHTML = list.map(function(r){
+      return '<tr><td>'+esc(r.grado)+'</td><td>'+esc(r.nombre)+'</td><td>'+esc(r.mision)+'</td><td>'+r.nota.toFixed(1)+'</td><td>'+r.aciertos+'/'+r.total+'</td><td>'+r.puntaje+'</td><td>'+new Date(r.fecha).toLocaleDateString('es-CO')+'</td></tr>';
+    }).join('');
+  }
+
+  function bestKey(mode){ return 'misionEntera.best.'+mode; }
+  function getBest(mode){ var v = lsGet(bestKey(mode)); return v ? parseInt(v,10) : 0; }
+  function setBestIfHigher(mode, score){ if(score > getBest(mode)) lsSet(bestKey(mode), String(score)); }
+  function refreshMenuBests(){
+    document.querySelectorAll('.mode-best').forEach(function(el){
+      var mode = el.getAttribute('data-best');
+      var best = getBest(mode);
+      el.textContent = best > 0 ? ('Mejor puntaje aquí: '+best+' pts') : 'Mejor puntaje aquí: —';
+    });
+  }
+
+  /* ---------------- CSV / descargas ---------------- */
+  var HIST_HEADERS = ['Grado','Nombre','Misión','Nota','Aciertos','Total','Puntaje','MejorRacha','Fecha'];
+  function recordToRow(r){
+    return [r.grado, r.nombre, r.mision, r.nota.toFixed(1), r.aciertos, r.total, r.puntaje, r.mejorRacha, new Date(r.fecha).toLocaleString('es-CO')];
+  }
+  function csvEscape(v){
+    v = String(v);
+    if(/[",\n\r]/.test(v)){ v = '"'+v.replace(/"/g,'""')+'"'; }
+    return v;
+  }
+  function buildCsv(rows){
+    var lines = [HIST_HEADERS.map(csvEscape).join(',')];
+    rows.forEach(function(r){ lines.push(recordToRow(r).map(csvEscape).join(',')); });
+    return '﻿' + lines.join('\r\n');
+  }
+  function slugify(s){ return String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'estudiante'; }
+
+  /** Descarga un archivo de texto en cualquier navegador. Si la página
+   * corre dentro de un Artifact de Claude con la capacidad "downloads"
+   * declarada, usa ese flujo nativo (con confirmación del usuario);
+   * si no (por ejemplo, esta misma página abierta desde un servidor
+   * propio o localhost), cae automáticamente a la descarga estándar
+   * del navegador mediante un Blob. */
+  function downloadCsv(filename, csvText){
+    function localDownload(){
+      try{
+        var blob = new Blob([csvText], { type:'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+        showToast('✅ Archivo descargado.');
+      }catch(e){
+        showToast('No se pudo descargar el archivo.');
+      }
+    }
+
+    if(window.claude && typeof window.claude.use === 'function'){
+      window.claude.use('downloads').then(function(dl){
+        if(!dl){ localDownload(); return; }
+        dl.save({ filename: filename, data: csvText }).then(function(res){
+          showToast(res.status === 'saved' ? '✅ Archivo guardado.' : '✅ Archivo enviado.');
+        }).catch(function(e){
+          if(e && e.code === 'declined') return;
+          localDownload();
+        });
+      }).catch(localDownload);
+    } else {
+      localDownload();
+    }
+  }
+
+  /* ---------------- game state ---------------- */
+  var state = null;
+  var lastRecord = null;
+
+  function startMode(modeId){
+    if(!validatePilotForm()) return;
+    ensureAudio();
+    state = {
+      mode: modeId,
+      questions: buildQuestions(modeId),
+      qIndex: 0,
+      score: 0,
+      streak: 0,
+      bestStreak: 0,
+      correctCount: 0,
+      weighted: 0,
+      current: null,
+      locked: false,
+      timeoutId: null,
+      qStart: 0,
+      qDuration: 0,
+      lastTier: 0,
+      player: { name: playerNameEl.value.trim(), grade: playerGradeEl.value.trim() }
+    };
+    lsSet('misionEntera.player', JSON.stringify(state.player));
+    playerChipEl.textContent = state.player.name + ' — Grado ' + state.player.grade;
+    showScreen('game');
+    renderHud();
+    loadQuestion();
+  }
+
+  function renderHud(){
+    var tier = state.current ? state.current.tier : 1;
+    rankLabelEl.textContent = RANK_NAMES[tier-1];
+    scoreDisplayEl.textContent = state.score+' pts';
+    qCounterEl.textContent = 'Pregunta '+Math.min(state.qIndex+1, state.questions.length)+' / '+state.questions.length;
+    streakDisplayEl.textContent = '🔥 racha '+state.streak;
+  }
+
+  function loadQuestion(){
+    if(!state) return;
+    if(state.qIndex >= state.questions.length){ finishQuiz(); return; }
+    state.locked = false;
+    feedbackBoxEl.hidden = true;
+    optionsGridEl.classList.remove('locked');
+
+    var q = state.questions[state.qIndex];
+    state.current = q;
+
+    if(state.qIndex % QUESTIONS_PER_TIER === 0 && q.tier > state.lastTier && q.tier > 1){
+      sndTierUp();
+      showToast('¡Nuevo nivel! Llegaste a '+PLANET_NAMES[q.tier-1]);
+    }
+    state.lastTier = q.tier;
+
+    equationDisplayEl.textContent = q.expr + ' = ?';
+    var opts = makeOptions(q.answer);
+    optionsGridEl.innerHTML = '';
+    opts.forEach(function(v){
+      var btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.type = 'button';
+      btn.textContent = fmtVal(v);
+      btn.dataset.value = String(v);
+      btn.addEventListener('click', function(){ onAnswer(v); });
+      optionsGridEl.appendChild(btn);
+    });
+
+    renderHud();
+    renderProgressRail(q.tier);
+    startTimer(q.time);
+  }
+
+  function startTimer(seconds){
+    clearTimeout(state.timeoutId);
+    state.qDuration = seconds*1000;
+    state.qStart = performance.now();
+    timerFillEl.classList.remove('warn');
+    timerFillEl.style.transition = 'none';
+    timerFillEl.style.width = '100%';
+    void timerFillEl.offsetWidth;
+    timerFillEl.style.transition = 'width '+seconds+'s linear';
+    timerFillEl.style.width = '0%';
+    setTimeout(function(){ if(state && !state.locked) timerFillEl.classList.add('warn'); }, seconds*1000*0.65);
+    state.timeoutId = setTimeout(onTimeout, seconds*1000);
+  }
+
+  function highlightOption(value, cls){
+    var btn = optionsGridEl.querySelector('.option-btn[data-value="'+value+'"]');
+    if(btn) btn.classList.add(cls);
+  }
+
+  function onAnswer(value){
+    if(!state || state.locked) return;
+    clearTimeout(state.timeoutId);
+    state.locked = true;
+    optionsGridEl.classList.add('locked');
+    var elapsed = performance.now() - state.qStart;
+    var frac = Math.max(0, Math.min(1, 1 - elapsed/state.qDuration));
+    if(value === state.current.answer){
+      highlightOption(String(value), 'correct');
+      handleCorrect(frac);
+    } else {
+      highlightOption(String(value), 'wrong');
+      handleWrong(false);
+    }
+  }
+
+  function onTimeout(){
+    if(!state || state.locked) return;
+    state.locked = true;
+    optionsGridEl.classList.add('locked');
+    handleWrong(true);
+  }
+
+  function handleCorrect(frac){
+    var tier = state.current.tier;
+    state.streak++;
+    state.correctCount++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    state.weighted += tier;
+
+    var base = 10*tier;
+    var speedBonus = Math.round(frac*10);
+    var streakBonus = Math.min(state.streak*2, 20);
+    var gained = base + speedBonus + streakBonus;
+    state.score += gained;
+
+    highlightOption(String(state.current.answer), 'correct');
+    feedbackBoxEl.hidden = false;
+    feedbackBoxEl.className = 'feedback is-good';
+    feedbackBoxEl.innerHTML = '<b>¡Correcto!</b> '+state.current.hint;
+    sndCorrect();
+    spawnFloatText('+'+gained, true);
+    renderHud();
+
+    state.qIndex++;
+    setTimeout(loadQuestion, 1300);
+  }
+
+  function handleWrong(fromTimeout){
+    state.streak = 0;
+    feedbackBoxEl.hidden = false;
+    feedbackBoxEl.className = 'feedback is-bad';
+    var prefix = fromTimeout ? '¡Se acabó el tiempo! ' : '';
+    feedbackBoxEl.innerHTML = prefix+'La respuesta era <b>'+fmtVal(state.current.answer)+'</b>. '+state.current.hint;
+    sndWrong();
+    renderHud();
+
+    state.qIndex++;
+    setTimeout(loadQuestion, 1900);
+  }
+
+  function finishQuiz(){
+    sndOver();
+    setBestIfHigher(state.mode, state.score);
+
+    var total = state.questions.length;
+    var notaRaw = 0.1 + (state.weighted/MAX_WEIGHT)*4.9;
+    var nota = Math.max(0.1, Math.min(5.0, Math.round(notaRaw*10)/10));
+    var pass = nota >= 3.0;
+
+    var record = {
+      nombre: state.player.name,
+      grado: state.player.grade,
+      mision: MODES[state.mode].short,
+      nota: nota,
+      aciertos: state.correctCount,
+      total: total,
+      puntaje: state.score,
+      mejorRacha: state.bestStreak,
+      fecha: new Date().toISOString()
+    };
+    saveHistorialRecord(record);
+    lastRecord = record;
+    if(window.misionDesktop && window.misionDesktop.cloud){
+      window.misionDesktop.cloud.syncResult(record).catch(function(){});
+    }
+
+    document.getElementById('overKicker').textContent = record.nombre+' — Grado '+record.grado+' — '+record.mision;
+    var notaEl = document.getElementById('overNota');
+    notaEl.textContent = nota.toFixed(1);
+    notaEl.style.color = nota>=4.0 ? 'var(--good)' : (nota>=3.0 ? 'var(--warm)' : 'var(--bad)');
+    var notaLabelEl = document.getElementById('overNotaLabel');
+    notaLabelEl.textContent = pass ? 'Aprobado' : 'No aprobado';
+    notaLabelEl.className = 'nota-label ' + (pass ? 'pass' : 'fail');
+    document.getElementById('overCorrect').textContent = record.aciertos+'/'+record.total;
+    document.getElementById('overScore').textContent = record.puntaje;
+    document.getElementById('overStreak').textContent = record.mejorRacha;
+    document.getElementById('overBest').textContent = getBest(state.mode);
+
+    showScreen('over');
+    refreshMenuBests();
+  }
+
+  /* ---------------- wiring ---------------- */
+  document.querySelectorAll('.mode-card').forEach(function(card){
+    card.addEventListener('click', function(){ startMode(card.getAttribute('data-mode')); });
+  });
+
+  document.getElementById('quitBtn').addEventListener('click', function(){
+    if(state) clearTimeout(state.timeoutId);
+    showScreen('setup');
+    refreshMenuBests();
+  });
+
+  document.getElementById('changeMissionBtn').addEventListener('click', function(){
+    if(state) clearTimeout(state.timeoutId);
+    state = null;
+    showScreen('setup');
+    refreshMenuBests();
+  });
+
+  document.getElementById('downloadResultBtn').addEventListener('click', function(){
+    if(!lastRecord) return;
+    var filename = 'mision-entera_'+slugify(lastRecord.nombre)+'_'+slugify(lastRecord.grado)+'.csv';
+    downloadCsv(filename, buildCsv([lastRecord]));
+  });
+
+  document.getElementById('viewHistBtn').addEventListener('click', function(){ renderHistTable(); showScreen('hist'); });
+  document.getElementById('histBackBtn').addEventListener('click', function(){ showScreen('setup'); refreshMenuBests(); });
+
+  document.getElementById('downloadHistBtn').addEventListener('click', function(){
+    var list = sortedHistorial();
+    if(!list.length){ showToast('Todavía no hay datos guardados en este dispositivo.'); return; }
+    var stamp = new Date().toISOString().slice(0,10);
+    downloadCsv('mision-entera_listado_'+stamp+'.csv', buildCsv(list));
+  });
+
+  var clearArmed = false;
+  var clearBtn = document.getElementById('clearHistBtn');
+  clearBtn.addEventListener('click', function(){
+    if(!clearArmed){
+      clearArmed = true;
+      clearBtn.textContent = '¿Seguro? Toca de nuevo';
+      setTimeout(function(){ clearArmed = false; clearBtn.textContent = 'Borrar historial'; }, 3500);
+      return;
+    }
+    clearArmed = false;
+    clearBtn.textContent = 'Borrar historial';
+    lsRemove(HIST_KEY);
+    renderHistTable();
+    refreshHistCount();
+    showToast('Historial de este dispositivo borrado.');
+  });
+
+  refreshMenuBests();
+  refreshHistCount();
+})();
+</script>
+</body>
+</html>
