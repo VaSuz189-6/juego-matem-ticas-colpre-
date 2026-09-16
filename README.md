@@ -1,4 +1,4 @@
-# Misión Entera
+# juego-matem-ticas-colpre
 
 Juego educativo de operaciones con números enteros para estudiantes de 6°.
 
@@ -85,3 +85,4 @@ juego/
 ## Abrir localmente
 
 Para una prueba rápida puedes abrir `html/menu.html` directamente en el navegador. Para probar actualizaciones, sincronización y empaquetado debes usar Electron con `npm start` o una versión instalada.
+# juego-matem-ticas-colpre-
