@@ -1,29 +1,25 @@
 {
-  "name": "mision-entera",
+  "name": "desafio-matematico",
   "version": "1.0.0",
-  "description": "Juego educativo de operaciones con numeros enteros.",
+  "description": "Juego educativo de operaciones.",
   "main": "electron/main.js",
-  "author": "Mision Entera",
-  "license": "MIT",
+  "author": "Cristhian Vargas Y Nancy Suarez",
   "private": true,
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win nsis",
-    "dist:linux": "electron-builder --linux AppImage deb rpm"
+    "dist": "electron-builder --win nsis",
+    "release": "electron-builder --win nsis --publish always"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.0",
-    "dotenv": "^16.6.1"
+    "electron-updater": "^6.6.2"
   },
   "devDependencies": {
     "electron": "^38.1.0",
-    "electron-builder": "^26.0.12",
-    "electron-updater": "^6.6.2"
+    "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "co.misionentera.app",
-    "productName": "Mision Entera",
+    "appId": "co.desafiomatematico.app",
+    "productName": "Desafio Matematico",
     "asar": true,
     "files": [
       "electron/**/*",
@@ -35,17 +31,15 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "TU_USUARIO_GITHUB",
-      "repo": "mision-entera"
+      "owner": "CEVS",
+      "repo": "juego-matem-ticas-colpre-"
     },
     "win": {
-      "target": ["nsis"],
-      "artifactName": "Mision-Entera-Setup-${version}.${ext}"
-    },
-    "linux": {
-      "target": ["AppImage", "deb", "rpm"],
-      "category": "Education",
-      "artifactName": "Mision-Entera-${version}.${ext}"
+      "target": [{
+        "target": "nsis",
+        "arch": ["x64"]
+      }],
+      "artifactName": "juego-matem-ticas-colpre-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

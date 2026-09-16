@@ -754,9 +754,6 @@
     };
     saveHistorialRecord(record);
     lastRecord = record;
-    if(window.misionDesktop && window.misionDesktop.cloud){
-      window.misionDesktop.cloud.syncResult(record).catch(function(){});
-    }
 
     document.getElementById('overKicker').textContent = record.nombre+' — Grado '+record.grado+' — '+record.mision;
     var notaEl = document.getElementById('overNota');

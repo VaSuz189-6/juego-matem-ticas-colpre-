@@ -1,16 +1,14 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
-require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const { autoUpdater } = require('electron-updater');
-const { syncResult } = require('./cloud-sync');
 
 let mainWindow;
 let updateState = { status: 'idle' };
 
-function sendUpdateState(payload) {
-  updateState = { ...updateState, ...payload };
+function publishState(state) {
+  updateState = { ...updateState, ...state };
   if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send('updater:state', updateState);
+    mainWindow.webContents.send('update:state', updateState);
   }
 }
 
@@ -37,66 +35,44 @@ function createWindow() {
 function configureUpdater() {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
-
-  autoUpdater.on('checking-for-update', () => sendUpdateState({ status: 'checking' }));
-  autoUpdater.on('update-available', (info) => sendUpdateState({ status: 'available', version: info.version }));
-  autoUpdater.on('update-not-available', () => sendUpdateState({ status: 'current' }));
-  autoUpdater.on('download-progress', (progress) => sendUpdateState({
-    status: 'downloading',
-    percent: Math.round(progress.percent)
-  }));
-  autoUpdater.on('update-downloaded', (info) => sendUpdateState({
-    status: 'downloaded',
-    version: info.version
-  }));
-  autoUpdater.on('error', (error) => sendUpdateState({
-    status: 'error',
-    message: error.message
-  }));
+  autoUpdater.on('checking-for-update', () => publishState({ status: 'checking' }));
+  autoUpdater.on('update-available', (info) => publishState({ status: 'available', version: info.version }));
+  autoUpdater.on('update-not-available', () => publishState({ status: 'current' }));
+  autoUpdater.on('download-progress', (progress) => publishState({ status: 'downloading', percent: Math.round(progress.percent) }));
+  autoUpdater.on('update-downloaded', (info) => publishState({ status: 'downloaded', version: info.version }));
+  autoUpdater.on('error', (error) => publishState({ status: 'error', message: error.message }));
 }
 
 app.whenReady().then(() => {
   configureUpdater();
   createWindow();
-
-  if (app.isPackaged) {
-    setTimeout(() => autoUpdater.checkForUpdates(), 2500);
-  }
-
+  if (app.isPackaged) setTimeout(() => autoUpdater.checkForUpdates(), 2500);
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-ipcMain.handle('updater:get-state', () => updateState);
-ipcMain.handle('updater:download', async () => {
-  try {
-    await autoUpdater.downloadUpdate();
-    return { ok: true };
-  } catch (error) {
-    sendUpdateState({ status: 'error', message: error.message });
-    return { ok: false, message: error.message };
-  }
-});
-ipcMain.handle('updater:install', () => {
-  autoUpdater.quitAndInstall();
-});
-ipcMain.handle('updater:check', async () => {
-  if (!app.isPackaged) return { ok: false, message: 'Las actualizaciones se prueban en la aplicación instalada.' };
+ipcMain.handle('update:get-state', () => updateState);
+ipcMain.handle('update:check', async () => {
+  if (!app.isPackaged) return { ok: false, message: 'Las actualizaciones se prueban en el instalador de Windows.' };
   try {
     await autoUpdater.checkForUpdates();
     return { ok: true };
   } catch (error) {
-    sendUpdateState({ status: 'error', message: error.message });
+    publishState({ status: 'error', message: error.message });
     return { ok: false, message: error.message };
   }
 });
-
-ipcMain.handle('app:show-error', (_event, message) => {
-  dialog.showErrorBox('Misión Entera', message);
+ipcMain.handle('update:download', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { ok: true };
+  } catch (error) {
+    publishState({ status: 'error', message: error.message });
+    return { ok: false, message: error.message };
+  }
 });
-
-ipcMain.handle('cloud:sync-result', (_event, record) => syncResult(record));
+ipcMain.handle('update:install', () => autoUpdater.quitAndInstall());
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

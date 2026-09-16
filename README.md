@@ -1,45 +1,43 @@
-# juego-matem-ticas-colpre
+# Desafío Matemático
 
 Juego educativo de operaciones con números enteros para estudiantes de 6°.
 
-## Aplicación de escritorio
+## Aplicación Windows y actualizaciones
 
-El proyecto incluye una capa Electron para convertir la interfaz en una aplicación instalable. Electron carga [html/menu.html](html/menu.html), mientras `electron/main.js` gestiona la ventana, las actualizaciones y la conexión opcional con Supabase.
+El proyecto puede ejecutarse como una aplicación de escritorio para Windows mediante Electron. La ventana carga [html/menu.html](html/menu.html) y comprueba automáticamente si existe una versión nueva en GitHub Releases.
 
-## Instalación local
+### Configuración inicial
 
-Instala Node.js LTS desde https://nodejs.org y reinicia VS Code. Después, desde la carpeta del proyecto ejecuta:
+1. Instala Node.js LTS desde https://nodejs.org.
+2. Crea un repositorio en GitHub llamado `desafio-matematico`.
+3. En [package.json](package.json), reemplaza `CAMBIA_ESTE_USUARIO` por tu usuario de GitHub.
+4. Desde la carpeta del proyecto ejecuta:
 
 ```bash
 npm install
 npm start
 ```
 
-## Actualizaciones automáticas
-
-1. Crea un repositorio público o privado en GitHub llamado `mision-entera`.
-2. Edita `package.json` y cambia `TU_USUARIO_GITHUB` por tu usuario real.
-3. Cambia la versión en `package.json`, por ejemplo de `1.0.0` a `1.0.1`.
-4. Genera los instaladores:
+### Crear el instalador Windows
 
 ```bash
-npm run dist:win
-npm run dist:linux
+npm run dist
 ```
 
-5. Publica los instaladores y los archivos `.yml` generados dentro de un GitHub Release con la misma etiqueta de versión, por ejemplo `v1.0.1`.
+El instalador se generará en `dist/Desafio-Matematico-Setup-1.0.0.exe`.
 
-También puedes automatizar los pasos 4 y 5 con [release.yml](.github/workflows/release.yml): después de configurar el repositorio, ejecuta `git tag v1.0.1` y `git push origin v1.0.1`. GitHub Actions construirá Windows y Linux y publicará los artefactos en Releases.
+### Publicar actualizaciones
 
-La aplicación instalada consulta GitHub al abrirse. Si encuentra una versión nueva, muestra la franja `Actualizar ahora`, descarga el instalador y permite reiniciar para instalarlo. Las actualizaciones no se prueban correctamente con `npm start`; deben probarse con una versión instalada.
+Para publicar una versión nueva, cambia la versión en [package.json](package.json), crea una etiqueta y súbela a GitHub:
 
-## Supabase
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
 
-1. Crea un proyecto en Supabase.
-2. Abre el SQL Editor y ejecuta [electron/supabase-schema.sql](electron/supabase-schema.sql).
-3. Configura `SUPABASE_URL` y `SUPABASE_ANON_KEY` basándote en [.env.example](.env.example).
+El workflow [release-windows.yml](.github/workflows/release-windows.yml) construirá automáticamente el `.exe` y lo publicará en GitHub Releases. Las aplicaciones instaladas comprobarán GitHub al abrirse, mostrarán `Actualizar ahora`, descargarán la nueva versión y permitirán reiniciar para instalarla.
 
-El cliente usa únicamente la clave anónima y las políticas RLS de Supabase. No coloques una `service_role key` dentro de esta aplicación. Si no hay conexión o Supabase no está configurado, el resultado continúa guardándose en el respaldo local.
+Las actualizaciones no se prueban correctamente con `npm start`; deben probarse instalando el `.exe` generado.
 
 ## Punto de entrada
 
@@ -51,6 +49,9 @@ Abre [html/menu.html](html/menu.html). La navegación queda dividida en tres pan
 
 ```text
 juego/
+├── electron/
+│   ├── main.js                 # Ventana y actualizaciones
+│   └── preload.js              # Puente seguro con el HTML
 ├── html/
 │   ├── menu.html              # Bienvenida e inicio
 │   ├── grados.html            # Selección de grados 6° a 11°
@@ -61,11 +62,6 @@ juego/
 ├── js/
 │   ├── starfield.js            # Fondo de estrellas
 │   └── update-ui.js            # Aviso visual de actualizaciones
-├── electron/
-│   ├── main.js                 # Ventana y procesos principales
-│   ├── preload.js              # Puente seguro hacia la interfaz
-│   ├── cloud-sync.js           # Envío opcional a Supabase
-│   └── supabase-schema.sql     # Tabla y políticas RLS
 ├── assets/
 │   ├── icons/                 # SVG propios e iconos de la interfaz
 │   └── audio/                 # Reservado; el sonido actual es generado por Web Audio
@@ -80,9 +76,6 @@ juego/
 - Los recursos propios van en `assets/`; no se guardan imágenes ni scripts sueltos en la raíz.
 - Los nombres de archivos usan minúsculas y guiones para facilitar el empaquetado posterior.
 
-- No se deben publicar claves secretas en el repositorio. `.env` está excluido por `.gitignore`.
-
 ## Abrir localmente
 
-Para una prueba rápida puedes abrir `html/menu.html` directamente en el navegador. Para probar actualizaciones, sincronización y empaquetado debes usar Electron con `npm start` o una versión instalada.
-# juego-matem-ticas-colpre-
+Puedes abrir `html/menu.html` directamente en el navegador para probar la interfaz. Para probar las actualizaciones debes usar el instalador de Windows.

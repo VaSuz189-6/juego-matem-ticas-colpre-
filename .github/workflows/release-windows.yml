@@ -1,4 +1,4 @@
-name: Publicar Mision Entera
+name: Publicar instalador Windows
 
 on:
   push:
@@ -7,10 +7,7 @@ on:
 
 jobs:
   release:
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     permissions:
       contents: write
     steps:
@@ -26,7 +23,7 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Crear y publicar instalador
+      - name: Crear y publicar instalador Windows
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run dist -- --publish always
+        run: npm run release
